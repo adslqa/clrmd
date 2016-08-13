@@ -911,12 +911,12 @@ namespace Microsoft.Diagnostics.Runtime
             _dacInterface.Flush();
 
             IGCInfo data = GetGCInfo();
-            if (data == null)
-                throw new ClrDiagnosticsException("This runtime is not initialized and contains no data.", ClrDiagnosticsException.HR.RuntimeUninitialized);
-
-            ServerGC = data.ServerMode;
-            HeapCount = data.HeapCount;
-            CanWalkHeap = data.GCStructuresValid && !dataTarget.DataReader.IsMinidump;
+            if (data != null)
+            {
+                ServerGC = data.ServerMode;
+                HeapCount = data.HeapCount;
+                CanWalkHeap = data.GCStructuresValid && dataTarget.DataReader.IsHeapAvailable;
+            }
             _dataReader = dataTarget.DataReader;
         }
 

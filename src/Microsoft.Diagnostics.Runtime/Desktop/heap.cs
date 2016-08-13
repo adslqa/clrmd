@@ -1462,7 +1462,7 @@ namespace Microsoft.Diagnostics.Runtime.Desktop
             }
             public int GetHashCode(TypeHandle obj)
             {
-                return ((int)obj.MethodTable + (int)obj.ComponentMethodTable) >> 3;
+                return unchecked(((int)obj.MethodTable + (int)obj.ComponentMethodTable)) >> 3;
             }
         }
         #endregion
