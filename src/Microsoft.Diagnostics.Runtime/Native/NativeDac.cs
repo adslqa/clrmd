@@ -421,5 +421,10 @@ namespace Microsoft.Diagnostics.Runtime.Native
         {
             get { return generation_table1.AllocationStart; }
         }
+
+        public IOomData OomData
+        {
+            get { return null; }
+        }
     }
 }
