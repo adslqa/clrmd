@@ -356,6 +356,20 @@ namespace Microsoft.Diagnostics.Runtime.Utilities
                 return ((header.Flags & MiniDumpWithFullMemoryInfo) == 0);
             }
 
+            public static bool IsHeapAvailable(IntPtr pbase)
+            {
+                if (!IsMiniDump(pbase))
+                    return true;
+
+                IntPtr commentPtr;
+                uint commentSize;
+                if (!MiniDumpReadDumpStream(pbase, MINIDUMP_STREAM_TYPE.CommentStreamW, out commentPtr, out commentSize))
+                    return false;
+
+                string comment = Marshal.PtrToStringUni(commentPtr, (int)(commentSize / sizeof(char)));
+                return comment.Contains("DumpWriter dump: has heap");
+            }
+
             public static bool MiniDumpReadDumpStream(IntPtr pBase, MINIDUMP_STREAM_TYPE type, out IntPtr streamPointer, out uint cbStreamSize)
             {
                 MINIDUMP_HEADER header = (MINIDUMP_HEADER)Marshal.PtrToStructure(pBase, typeof(MINIDUMP_HEADER));
@@ -1717,6 +1731,8 @@ namespace Microsoft.Diagnostics.Runtime.Utilities
 
         public bool IsMinidump { get; set; }
 
+        public bool IsHeapAvailable { get; set; }
+
         /// <summary>
         /// Constructor
         /// </summary>
@@ -1769,6 +1785,7 @@ namespace Microsoft.Diagnostics.Runtime.Utilities
 
             _mappedFileMemory = new DumpNative.LoadedFileMemoryLookups();
             IsMinidump = DumpNative.IsMiniDump(_view.BaseAddress);
+            IsHeapAvailable = DumpNative.IsHeapAvailable(_view.BaseAddress);
         }
 
 

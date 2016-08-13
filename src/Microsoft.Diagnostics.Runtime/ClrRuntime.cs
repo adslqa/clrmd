@@ -74,6 +74,12 @@ namespace Microsoft.Diagnostics.Runtime
         abstract public IList<ClrThread> Threads { get; }
 
         /// <summary>
+        /// Returns the primary interface to the DAC, which can be used to obtain additional information 
+        /// on top of what the library already exposes.
+        /// </summary>
+        abstract internal IXCLRDataProcess DacInterface { get; }
+
+        /// <summary>
         /// Enumerates all objects currently on the finalizer queue.  (Not finalizable objects, but objects
         /// which have been collected and will be imminently finalized.)
         /// </summary>
@@ -891,6 +897,11 @@ namespace Microsoft.Diagnostics.Runtime
         public override int PointerSize
         {
             get { return IntPtr.Size; }
+        }
+
+        internal override IXCLRDataProcess DacInterface
+        {
+            get { return _dacInterface; }
         }
 
         internal bool CanWalkHeap { get; private set; }
