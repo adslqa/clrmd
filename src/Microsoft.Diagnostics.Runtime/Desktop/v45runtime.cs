@@ -179,8 +179,13 @@ namespace Microsoft.Diagnostics.Runtime.Desktop
         internal override IHeapDetails GetSvrHeapDetails(ulong addr)
         {
             V4HeapDetails data;
+
             if (_sos.GetGCHeapDetails(addr, out data) < 0)
                 return null;
+
+            if (_sos.GetOOMData(addr, out data.oom_data) < 0)
+                data.oom_data.Reason = OomReason.NoFailure;
+
             return data;
         }
 
@@ -189,6 +194,10 @@ namespace Microsoft.Diagnostics.Runtime.Desktop
             V4HeapDetails data;
             if (_sos.GetGCHeapStaticData(out data) < 0)
                 return null;
+
+            if (_sos.GetOOMStaticData(out data.oom_data) < 0)
+                data.oom_data.Reason = OomReason.NoFailure;
+
             return data;
         }
 
@@ -1051,9 +1060,9 @@ namespace Microsoft.Diagnostics.Runtime.Desktop
         [PreserveSig]
         int GetHeapSegmentData(ulong seg, out V4SegmentData data);
         [PreserveSig]
-        int GetOOMData_do_not_use(); //(ulong oomAddr, out DacpOomData data);
+        int GetOOMData(ulong heap, out V45OomData data);
         [PreserveSig]
-        int GetOOMStaticData_do_not_use(); //(out DacpOomData data);
+        int GetOOMStaticData(out V45OomData data);
         [PreserveSig]
         int GetHeapAnalyzeData_do_not_use(); //(ulong addr, out  DacpGcHeapAnalyzeData data);
         [PreserveSig]
@@ -1789,6 +1798,85 @@ namespace Microsoft.Diagnostics.Runtime.Desktop
         public ulong Function;
         public ulong Context;
         public ulong NextWorkRequest;
+    }
+
+    enum OomReason : int
+    {
+        NoFailure = 0,
+        Budget = 1,
+        CantCommit = 2,
+        CantReserve = 3,
+        LOH = 4,
+        LowMemory = 5,
+        UnproductiveFullGC = 6
+    };
+
+    enum FailureGetMemory : int
+    {
+        NoFailure = 0,
+        ReserveSegment = 1,
+        CommitSegmentBeg = 2,
+        CommitEphemeralSegment = 3,
+        GrowTable = 4,
+        CommitTable = 5
+    };
+
+    struct V45OomData : IOomData
+    {
+        public OomReason Reason;
+        public ulong AllocationSize;
+        public ulong AvailablePageFileMB;
+        public ulong GCIndex;
+        public FailureGetMemory FailureDetails;
+        public ulong Size;
+        public int LOH; // BOOL
+
+        string IOomData.Reason
+        {
+            get { return String.Format("Reason: {0} Detail: {1}", GetReasonMessage(), GetFGMMessage()); }
+        }
+        ulong IOomData.AllocationSize { get { return AllocationSize; } }
+        bool IOomData.LargeObjectHeap { get { return LOH == 1; } }
+        ulong IOomData.GCNumber { get { return GCIndex; } }
+
+        private string GetFGMMessage()
+        {
+            switch (FailureDetails)
+            {
+                case FailureGetMemory.ReserveSegment:
+                    return "Failed to reserve memory";
+                case FailureGetMemory.CommitSegmentBeg:
+                    return "Didn't have enough memory to commit beginning of the segment";
+                case FailureGetMemory.CommitEphemeralSegment:
+                    return "Didn't have enough memory to commit the new ephemeral segment";
+                case FailureGetMemory.GrowTable:
+                    return "Didn't have enough memory to grow the internal GC datastructures";
+                case FailureGetMemory.CommitTable:
+                    return "Didn't have enough memory to commit the internal GC datastructures";
+                default:
+                    return "<no detail>";
+            }
+        }
+
+        private string GetReasonMessage()
+        {
+            switch (Reason)
+            {
+                case OomReason.Budget:
+                case OomReason.CantReserve:
+                    return "This is likely a bug in the GC";
+                case OomReason.CantCommit:
+                    return "Didn't have enough memory to commit";
+                case OomReason.LOH:
+                    return "Didn't have enough memory to allocate an LOH segment";
+                case OomReason.LowMemory:
+                    return "Low on memory during GC";
+                case OomReason.UnproductiveFullGC:
+                    return "Could not do a full GC";
+                default:
+                    return "<no reason>";
+            }
+        }
     }
 
     #endregion

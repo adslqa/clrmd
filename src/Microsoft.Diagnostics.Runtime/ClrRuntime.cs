@@ -187,6 +187,18 @@ namespace Microsoft.Diagnostics.Runtime
         public event RuntimeFlushedCallback RuntimeFlushed;
 
         /// <summary>
+        /// Returns whether an out-of-memory condition occurred in the target. If this is true, use
+        /// <see cref="OutOfMemoryInformation"/> to get the OOM details.
+        /// </summary>
+        public abstract bool OutOfMemoryExceptionOccurred { get; }
+
+        /// <summary>
+        /// Returns detailed information about the out-of-memory condition that occurred in the target.
+        /// If there was no out-of-memory condition, returns <code>null</code>.
+        /// </summary>
+        public abstract ClrOomInformation OutOfMemoryInformation { get; }
+
+        /// <summary>
         /// Call when flushing the runtime.
         /// </summary>
         protected void OnRuntimeFlushed()
@@ -289,6 +301,32 @@ namespace Microsoft.Diagnostics.Runtime
                     return null;
             }
         }
+    }
+
+    /// <summary>
+    /// Provides information about the out-of-memory condition that occurred.
+    /// </summary>
+    public abstract class ClrOomInformation
+    {
+        /// <summary>
+        /// The reason for this out-of-memory condition (a detailed string).
+        /// </summary>
+        public abstract string Reason { get; }
+
+        /// <summary>
+        /// The size of the allocation that led to this out-of-memory condition.
+        /// </summary>
+        public abstract ulong AllocationSize { get; }
+
+        /// <summary>
+        /// Whether this out-of-memory condition occurred in the large object heap.
+        /// </summary>
+        public abstract bool LargeObjectHeap { get; }
+
+        /// <summary>
+        /// The garbage collection number during which this out-of-memory condition occurred.
+        /// </summary>
+        public abstract ulong GCNumber { get; }
     }
 
     /// <summary>
