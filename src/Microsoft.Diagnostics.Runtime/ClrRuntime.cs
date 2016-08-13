@@ -879,7 +879,7 @@ namespace Microsoft.Diagnostics.Runtime
             {
                 ServerGC = data.ServerMode;
                 HeapCount = data.HeapCount;
-                CanWalkHeap = data.GCStructuresValid && !dataTarget.DataReader.IsMinidump;
+                CanWalkHeap = data.GCStructuresValid && dataTarget.DataReader.IsHeapAvailable;
             }
             _dataReader = dataTarget.DataReader;
         }
