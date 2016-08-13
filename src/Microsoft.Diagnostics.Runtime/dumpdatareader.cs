@@ -89,6 +89,14 @@ namespace Microsoft.Diagnostics.Runtime
             }
         }
 
+        public bool IsHeapAvailable
+        {
+            get
+            {
+                return _dumpReader.IsHeapAvailable;
+            }
+        }
+
         public override string ToString()
         {
             return _fileName;

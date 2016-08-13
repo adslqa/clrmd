@@ -654,6 +654,12 @@ namespace Microsoft.Diagnostics.Runtime
         bool IsMinidump { get; }
 
         /// <summary>
+        /// Returns true if the data target has heap information available, so heap-related  
+        /// features can work.
+        /// </summary>
+        bool IsHeapAvailable { get; }
+
+        /// <summary>
         /// Gets the TEB of the specified thread.
         /// </summary>
         /// <param name="thread">The OS thread ID to get the TEB for.</param>
@@ -884,6 +890,12 @@ namespace Microsoft.Diagnostics.Runtime
         public abstract bool IsMinidump { get; }
 
         /// <summary>
+        /// Returns true if the target has heap information available. If it returns false, functions that rely on 
+        /// heap information (such as roots, objects, types) may fail to return data.
+        /// </summary>
+        public abstract bool IsHeapAvailable { get; }
+
+        /// <summary>
         /// Returns the architecture of the target process or crash dump.
         /// </summary>
         public abstract Architecture Architecture { get; }
@@ -956,6 +968,11 @@ namespace Microsoft.Diagnostics.Runtime
         public override bool IsMinidump
         {
             get { return _dataReader.IsMinidump; }
+        }
+
+        public override bool IsHeapAvailable
+        {
+            get { return _dataReader.IsHeapAvailable; }
         }
 
         public override Architecture Architecture
@@ -1527,6 +1544,14 @@ namespace Microsoft.Diagnostics.Runtime
             }
         }
 
+        public bool IsHeapAvailable
+        {
+            get
+            {
+                return !IsMinidump;
+            }
+        }
+
         public Architecture GetArchitecture()
         {
             SetClientInstance();
@@ -2036,6 +2061,14 @@ namespace Microsoft.Diagnostics.Runtime
         }
 
         public bool IsMinidump
+        {
+            get
+            {
+                return false;
+            }
+        }
+
+        public bool IsHeapAvailable
         {
             get
             {

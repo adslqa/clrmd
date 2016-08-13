@@ -24,3 +24,6 @@ using System.Runtime.InteropServices;
 
 [assembly: AssemblyVersion("0.8.31.1")]
 [assembly: AssemblyFileVersion("0.8.31.1")]
+
+[assembly: InternalsVisibleTo("msos")]
+[assembly: InternalsVisibleTo("ClrMemDiagExt")]
