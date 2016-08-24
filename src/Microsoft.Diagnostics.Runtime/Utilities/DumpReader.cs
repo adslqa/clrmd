@@ -2914,6 +2914,7 @@ namespace Microsoft.Diagnostics.Runtime.Utilities
         {
             this.SizeOfInfo = info.SizeOfInfo;
             this.InfoType = (DumpHandleType)info.InfoType;
+            this.Rva = rva;
         }
         /// <summary>
         /// Rva address of MINIDUMP_HANDLE_OBJECT_INFORMATION  structure
