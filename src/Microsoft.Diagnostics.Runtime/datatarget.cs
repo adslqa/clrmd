@@ -518,6 +518,7 @@ namespace Microsoft.Diagnostics.Runtime
         private bool _versionInit;
     }
 
+
     /// <summary>
     /// Represents the dac dll
     /// </summary>
@@ -554,6 +555,147 @@ namespace Microsoft.Diagnostics.Runtime
         {
             PlatformAgnosticFileName = agnosticName;
             TargetArchitecture = targetArch;
+        }
+    }
+
+    /// <summary>
+    /// Provides information about handles in a DataTarget
+    /// </summary>
+    [Serializable]
+    public class HandleInfo
+    {
+        /// <summary>
+        /// Constructs HandleInfo from DumpHandle class data
+        /// </summary>
+        /// <param name="dumpHandle"></param>
+        public HandleInfo(DumpHandle dumpHandle)
+        {
+            ObjectName = dumpHandle.ObjectName;
+            TypeName = dumpHandle.TypeName;
+            Handle = dumpHandle.Handle;
+            HandleCount = dumpHandle.HandleCount;
+            ObjectNameRva = dumpHandle.ObjectNameRva;
+            PointerCount = dumpHandle.PointerCount;
+            TypeNameRva = dumpHandle.TypeNameRva;
+            Attributes = dumpHandle.Attributes;
+
+            GrantedAccess = dumpHandle.GrantedAccess;
+            ObjectInfoRva = dumpHandle.ObjectInfoRva;
+            Type = Convert(dumpHandle.Type);
+            OwnerProcessId = dumpHandle.OwnerProcessId;
+            OwnerThreadId = dumpHandle.OwnerThreadId;
+            MutexUnknown = dumpHandle.MutexUnknown;
+        }
+
+        /// <summary>
+        /// Name of Minidump handle object 
+        /// </summary>
+        public string ObjectName { get; private set; }
+        /// <summary>
+        /// Name of Minidump handle type object 
+        /// </summary>
+        public string TypeName { get; private set; }
+        /// <summary>
+        /// Handle address
+        /// </summary>
+        public ulong Handle { get; private set; }
+        /// <summary>
+        /// Amount of handles
+        /// </summary>
+        public uint HandleCount { get; private set; }
+        /// <summary>
+        /// An RVA to a MINIDUMP_STRING structure that specifies the object name of the handle. This member can be 0.
+        /// </summary>
+        public Int32 ObjectNameRva { get; private set; }
+        /// <summary>
+        /// This is the number kernel references to the object that this handle refers to. 
+        /// </summary>
+        public uint PointerCount { get; private set; }
+        /// <summary>
+        /// An RVA to a MINIDUMP_STRING structure that specifies the object type name of the handle. This member can be 0.
+        /// </summary>
+        public Int32 TypeNameRva { get; private set; }
+        /// <summary>
+        /// /The attributes for the handle, this corresponds to OBJ_INHERIT, OBJ_CASE_INSENSITIVE, etc.
+        /// </summary>
+        public uint Attributes { get; private set; }
+        /// <summary>
+        /// The meaning of this member depends on the handle type and the operating system.
+        /// </summary>
+        public uint GrantedAccess { get; private set; }
+        /// <summary>
+        ///  An RVA to a MINIDUMP_HANDLE_OBJECT_INFORMATION sttructure
+        /// </summary>
+        public Int32 ObjectInfoRva { get; private set; }
+        /// <summary>
+        /// Type of MiniDump handle
+        /// </summary>
+        public HandleType Type { get; set; }
+        /// <summary>
+        /// </summary>
+        public uint OwnerProcessId { get; internal set; }
+        /// <summary>
+        /// Handle owner thread id
+        /// </summary>
+        public uint OwnerThreadId { get; internal set; }
+        /// <summary>
+        /// Unknown mutex fields
+        /// </summary>
+        public MutexUnknownFields MutexUnknown { get; internal set; }
+
+        /// <summary>
+        /// MiniDumpHandle type enumeration
+        /// </summary>
+        public enum HandleType
+        {
+            /// <summary>
+            /// No Type
+            /// </summary>
+            NONE,
+            /// <summary>
+            /// Thread Type
+            /// </summary>
+            THREAD,
+            /// <summary>
+            /// Mutex Type
+            /// </summary>
+            MUTEX,
+            /// <summary>
+            /// Process Type
+            /// </summary>
+            PROCESS,
+            /// <summary>
+            /// Event Type
+            /// </summary>
+            EVENT,
+            /// <summary>
+            /// Critical Section Type
+            /// </summary>
+            SECTION,
+            /// <summary>
+            /// Max Type Handle
+            /// </summary>
+            MAX
+        }
+
+        HandleType Convert(DumpHandleType type)
+        {
+            HandleType result = HandleType.NONE;
+            switch (type)
+            {
+                case DumpHandleType.NONE: result = HandleType.NONE; break;
+                case DumpHandleType.THREAD: result = HandleType.THREAD; break;
+                case DumpHandleType.MUTEX1:
+                case DumpHandleType.MUTEX2: result = HandleType.MUTEX; break;
+                case DumpHandleType.PROCESS1:
+                case DumpHandleType.PROCESS2: result = HandleType.PROCESS; break;
+                case DumpHandleType.EVENT: result = HandleType.EVENT; break;
+                case DumpHandleType.SECTION: result = HandleType.SECTION; break;
+                case DumpHandleType.TYPE_MAX: result = HandleType.MAX; break;
+                default:
+                    break;
+            }
+            return result;
         }
     }
 
@@ -619,6 +761,12 @@ namespace Microsoft.Diagnostics.Runtime
         /// </summary>
         /// <returns>A list of the modules in the target process.</returns>
         IList<ModuleInfo> EnumerateModules();
+
+        /// <summary>
+        /// Enumerates the OS thread ID of all threads in the process.
+        /// </summary>
+        /// <returns>An enumeration of all threads in the target process.</returns>
+        IEnumerable<HandleInfo> EnumerateHandles();
 
         /// <summary>
         /// Gets the version information for a given module (given by the base address of the module).
@@ -2036,6 +2184,11 @@ namespace Microsoft.Diagnostics.Runtime
 
             return true;
         }
+
+        public IEnumerable<HandleInfo> EnumerateHandles()
+        {
+            throw new NotImplementedException();
+        }
     }
 
     internal unsafe class LiveDataReader : IDataReader
@@ -2358,8 +2511,13 @@ namespace Microsoft.Diagnostics.Runtime
 
         [DllImport("kernel32.dll", SetLastError = true)]
         private static extern SafeWin32Handle OpenThread(ThreadAccess dwDesiredAccess, [MarshalAs(UnmanagedType.Bool)] bool bInheritHandle, uint dwThreadId);
+
+        public IEnumerable<HandleInfo> EnumerateHandles()
+        {
+            throw new NotImplementedException();
+        }
         #endregion
-        
+
         private enum ThreadAccess : int
         {
             THREAD_ALL_ACCESS = (0x1F03FF),

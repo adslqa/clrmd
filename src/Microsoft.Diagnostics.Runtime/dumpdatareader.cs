@@ -265,5 +265,13 @@ namespace Microsoft.Diagnostics.Runtime
         {
             throw new NotImplementedException();
         }
+
+        public IEnumerable<HandleInfo> EnumerateHandles()
+        {
+            foreach (var dumpHandle in _dumpReader.EnumerateHandles())
+            {
+                yield return new HandleInfo(dumpHandle);
+            }
+        }
     }
 }
