@@ -1,0 +1,14 @@
+<?xml version="1.0"?>
+<package >
+  <metadata>
+    <id>Microsoft.Diagnostics.Runtime</id>
+    <version>0.8.31.0</version>
+    <authors>Microsoft, Sasha Goldshtein</authors>
+    <owners>Sasha Goldshtein</owners>
+    <requireLicenseAcceptance>false</requireLicenseAcceptance>
+    <description>Private fork of CLRMD.</description>
+    <copyright>Copyright Sasha Goldshtein, 2016</copyright>
+    <dependencies>
+    </dependencies>
+  </metadata>
+</package>
